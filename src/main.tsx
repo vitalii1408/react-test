@@ -1,11 +1,19 @@
-import { createRoot } from "react-dom/client";
+export default function App() {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    
+    const formData = new FormData(form);
+    const username = formData.get("username");
+    console.log("Username:", username);
+    
+    form.reset();
+  };
 
-createRoot(document.getElementById("root") as HTMLElement).render(
-  <div>
-    <h1>Welcome to React</h1>
-    <p>
-      This is JSX — it looks like HTML, but it's not quite the same. It has its
-      own rules!
-    </p>
-  </div>
-);
+  return (
+	  <form onSubmit={handleSubmit}>
+      <input type="text" name="username" />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
