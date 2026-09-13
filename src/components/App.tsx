@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import ReactPaginate from 'react-paginate';
+
 
 const fetchCharacter = async (id: string) => {
   const response = await axios.get(`https://swapi.info/api/people/${id}`);
