@@ -1,37 +1,67 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import ReactPaginate from 'react-paginate';
 
+const PAGE_SIZE = 5;
+const TOTAL_PEOPLE = 82;
 
-const fetchCharacter = async (id: string) => {
-  const response = await axios.get(`https://swapi.info/api/people/${id}`);
-  return response.data;
+type Character = {
+  name: string;
+  height: string;
+  url: string;
+};
+
+// Симулюємо "сторінку" даних: swapi.info віддає весь список одразу,
+// тож для прикладу нескінченного завантаження ми самі ділимо людей на групи по id.
+const fetchPeoplePage = async (page: number): Promise<Character[]> => {
+  const start = (page - 1) * PAGE_SIZE + 1;
+  const ids = Array.from({ length: PAGE_SIZE }, (_, i) => start + i).filter(
+    (id) => id <= TOTAL_PEOPLE
+  );
+
+  const responses = await Promise.all(
+    ids.map((id) => axios.get(`https://swapi.info/api/people/${id}`))
+  );
+
+  return responses.map((response) => response.data);
 };
 
 export default function App() {
-  const [characterId, setCharacterId] = useState('');
-
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['character', characterId],
-    queryFn: () => fetchCharacter(characterId),
-    enabled: characterId !== '',
+  const {
+    data,
+    error,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['people'],
+    queryFn: ({ pageParam }) => fetchPeoplePage(pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (_lastPage, allPages) => {
+      const nextPage = allPages.length + 1;
+      return (nextPage - 1) * PAGE_SIZE < TOTAL_PEOPLE ? nextPage : undefined;
+    },
   });
-
-  const handleSearch = (formData: FormData) => {
-    const id = formData.get('id') as string;
-    setCharacterId(id);
-  };
 
   return (
     <>
-      <form action={handleSearch}>
-        <input type="text" name="id" placeholder="Enter character ID" />
-        <button type="submit">Search</button>
-      </form>
-      {isLoading && <p>Loading data, please wait...</p>}
-      {isError && <p>Whoops, something went wrong! {error?.message}</p>}
-      {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
+      <h1>Star Wars characters</h1>
+
+      {isLoading && <p>Loading...</p>}
+      {isError && <p>Error: {error?.message}</p>}
+
+      <ul>
+        {data?.pages.flat().map((person) => (
+          <li key={person.url}>{person.name}</li>
+        ))}
+      </ul>
+
+      {hasNextPage && (
+        <button onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+          {isFetchingNextPage ? 'Loading more...' : 'Load more'}
+        </button>
+      )}
     </>
   );
 }
