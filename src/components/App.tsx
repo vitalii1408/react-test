@@ -1,15 +1,22 @@
-// src/components/App.tsx
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
-import Product from './Product';
+const fetchPerson = async () => {
+  const response = await axios.get(`https://swapi.info/api/people/1`);
+  return response.data;
+};
 
 export default function App() {
+  const { data, error, isLoading, isError } = useQuery({
+    queryKey: ['person'],
+    queryFn: fetchPerson,
+  });
+
   return (
     <>
-      <h1>Best selling</h1>
-
-      <Product />
-      <Product />
-      <Product />
+      {isLoading && <p>Loading...</p>}
+      {isError && <p>An error occurred: {error.message}</p>}
+      {data && <pre>{JSON.stringify(data, null, 2)}</pre>}
     </>
   );
 }
