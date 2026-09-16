@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import OrderForm from './OrderForm';
 
 const PAGE_SIZE = 5;
 const TOTAL_PEOPLE = 82;
@@ -47,6 +48,8 @@ export default function App() {
   return (
     <>
       <h1>Star Wars characters</h1>
+
+      <OrderForm />
 
       {isLoading && <p>Loading...</p>}
       {isError && <p>Error: {error?.message}</p>}
